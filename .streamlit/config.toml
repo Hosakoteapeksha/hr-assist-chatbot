@@ -1,0 +1,8 @@
+[theme]
+# The app's custom design is light; forcing light mode keeps text readable
+# even when the visitor's computer is in dark mode.
+base = "light"
+primaryColor = "#174b34"
+
+[server]
+maxUploadSize = 50

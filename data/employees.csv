@@ -1,0 +1,10 @@
+employee_code,full_name,email,department,designation,role,manager,annual_leave,sick_leave,casual_leave
+HR001,HR Admin,hr.admin@company.com,Human Resources,HR Manager,admin,,18,12,6
+EMP101,Apeksha H,apeksha@company.com,Engineering,Software & AI Engineer,employee,Ravi Kumar,18,12,6
+EMP102,Ravi Kumar,ravi.kumar@company.com,Engineering,Engineering Manager,employee,HR Admin,15,10,5
+EMP103,Priya Sharma,priya.sharma@company.com,Design,UI/UX Designer,employee,Ravi Kumar,12,12,4
+EMP104,Arjun Reddy,arjun.reddy@company.com,IT Support,IT Support Engineer,employee,Ravi Kumar,18,9,6
+EMP105,Sneha Patil,sneha.patil@company.com,Finance,Accounts Executive,employee,HR Admin,10,12,3
+EMP106,Mohammed Irfan,mohammed.irfan@company.com,Sales,Sales Executive,employee,HR Admin,16,11,6
+EMP107,Kavya Nair,kavya.nair@company.com,Marketing,Marketing Analyst,employee,HR Admin,18,12,5
+EMP108,Rahul Verma,rahul.verma@company.com,Engineering,Data Analyst,employee,Ravi Kumar,14,12,6

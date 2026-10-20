@@ -1,0 +1,13 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Secrets - NEVER commit these
+.env
+.streamlit/secrets.toml
+
+# Generated at runtime
+.chroma/
+data/*.db
