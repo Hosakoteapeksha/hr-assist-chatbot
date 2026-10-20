@@ -39,15 +39,15 @@ _load_latest_src_modules()
 import pandas as pd  # noqa: E402
 
 from src.auth import authenticate, change_password  # noqa: E402
-from src.config import (ADMIN_EMAIL, ADMIN_PASSWORD, DEFAULT_EMPLOYEE_PASSWORD, GOOGLE_API_KEY,  # noqa: E402
-                        HR_EMAIL, KNOWLEDGE_DIR, SHOW_DEMO_LOGINS)
+from src.config import (ADMIN_EMAIL, ADMIN_PASSWORD, ALLOW_SIGNUP, ALLOWED_EMAIL_DOMAINS,  # noqa: E402
+                        DEFAULT_EMPLOYEE_PASSWORD, GOOGLE_API_KEY, HR_EMAIL, KNOWLEDGE_DIR, SHOW_DEMO_LOGINS)
 from src.database import (CATEGORIES, IS_SQLITE, LEAVE_TYPES, create_user, get_user, init_db,  # noqa: E402
                           list_chat_log, list_email_log, list_requests, list_users, request_stats,
                           set_password, set_user_active, update_leave_balance)
 from src.graph import run_chat  # noqa: E402
 from src.holidays import holiday_list, upcoming_holidays, working_days  # noqa: E402
 from src.llm import active_model  # noqa: E402
-from src.notifications import email_configured, hr_recipients, send_test_email  # noqa: E402
+from src.notifications import email_configured, hr_recipients, notify_hr_new_account, send_test_email  # noqa: E402
 from src.rag import (build_knowledge_base, ensure_knowledge_base, index_info,  # noqa: E402
                      knowledge_base_exists, knowledge_base_up_to_date, list_knowledge_files)
 from src.services import decide_and_notify, submit_request  # noqa: E402
@@ -166,19 +166,25 @@ def login_view():
         st.markdown('<div class="login-hero"><div class="brand-mark">🌿</div><h1>HR Assist</h1>'
                     '<p>Your HR &amp; IT companion · please sign in</p></div>', unsafe_allow_html=True)
         with st.container(border=True):
-            with st.form("login_form"):
-                email = st.text_input("Email ID", placeholder="you@company.com")
-                password = st.text_input("Password", type="password")
-                submitted = st.form_submit_button("Log in", type="primary", width="stretch")
-            if submitted:
-                user, error = authenticate(email, password)
-                if user:
-                    st.session_state["user"] = user
-                    st.session_state["nav_page"] = "Admin Dashboard" if user["role"] == "admin" else "Home"
-                    st.rerun()
-                else:
-                    st.error(error)
-            st.caption("Forgot your password? Contact HR — they can reset it from the admin panel.")
+            tabs = st.tabs(["Log in", "Create account"] if ALLOW_SIGNUP else ["Log in"])
+            with tabs[0]:
+                with st.form("login_form"):
+                    email = st.text_input("Email ID", placeholder="you@company.com")
+                    password = st.text_input("Password", type="password")
+                    submitted = st.form_submit_button("Log in", type="primary", width="stretch")
+                if submitted:
+                    user, error = authenticate(email, password)
+                    if user:
+                        st.session_state["user"] = user
+                        st.session_state["nav_page"] = "Admin Dashboard" if user["role"] == "admin" else "Home"
+                        st.rerun()
+                    else:
+                        st.error(error + (" New here? Use the Create account tab."
+                                          if ALLOW_SIGNUP and error.startswith("Incorrect") else ""))
+                st.caption("Forgot your password? Contact HR — they can reset it from the admin panel.")
+            if ALLOW_SIGNUP:
+                with tabs[1]:
+                    signup_form()
         if SHOW_DEMO_LOGINS:
             with st.expander("Demo accounts"):
                 rows = []
@@ -191,6 +197,46 @@ def login_view():
                     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
                 else:
                     st.caption("Ask HR for your login details.")
+
+
+def signup_form():
+    with st.form("signup_form", clear_on_submit=False):
+        name = st.text_input("Full name")
+        email = st.text_input("Your email ID", placeholder="you@gmail.com")
+        c1, c2 = st.columns(2)
+        dept = c1.selectbox("Department", ["Engineering", "Design", "IT Support", "Finance", "Sales",
+                                           "Marketing", "Human Resources", "Operations", "Other"])
+        desig = c2.text_input("Designation", placeholder="e.g. Software Engineer")
+        pw = st.text_input("Create password (min 6 characters)", type="password")
+        pw2 = st.text_input("Confirm password", type="password")
+        create = st.form_submit_button("Create account", type="primary", width="stretch")
+    if create:
+        email_clean = (email or "").strip().lower()
+        domain = email_clean.split("@")[-1] if "@" in email_clean else ""
+        if not name.strip():
+            st.error("Please enter your full name.")
+        elif "@" not in email_clean or "." not in domain:
+            st.error("Please enter a valid email ID.")
+        elif ALLOWED_EMAIL_DOMAINS and domain not in ALLOWED_EMAIL_DOMAINS:
+            st.error("Please use your company email (" + ", ".join("@" + d for d in ALLOWED_EMAIL_DOMAINS) + ").")
+        elif pw != pw2:
+            st.error("The passwords don't match.")
+        else:
+            try:
+                user = create_user(email_clean, name, pw, "employee", dept, desig.strip())
+                try:
+                    notify_hr_new_account(user)
+                except Exception as exc:
+                    print("Could not email HR about new account:", exc)
+                st.session_state["user"] = user
+                st.session_state["nav_page"] = "Home"
+                flash("success", f"Welcome, {user['full_name']}! Your account is ready.")
+                st.rerun()
+            except ValueError as exc:
+                msg = str(exc)
+                if "already exists" in msg:
+                    msg += " Please use the Log in tab."
+                st.error(msg)
 
 
 if "user" not in st.session_state:

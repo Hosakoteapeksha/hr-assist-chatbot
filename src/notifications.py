@@ -113,6 +113,20 @@ def notify_employee_decision(req):
     return send_email([req["user_email"]], subject, text, html, req["request_id"])
 
 
+def notify_hr_new_account(user):
+    """Tell HR that an employee created an account (HR can disable it in Admin -> Employees)."""
+    subject = f"[{APP_NAME}] New employee account: {user['full_name']}"
+    rows = [("Name", user["full_name"]), ("Email", user["email"]), ("Department", user.get("department", "")),
+            ("Designation", user.get("designation", ""))]
+    text = (f"A new employee account was created in {APP_NAME}.\n\n"
+            + "\n".join(f"{k}: {v}" for k, v in rows if v)
+            + f"\n\nIf you don't recognise this person, disable the account in Admin > Employees: {APP_URL}\n")
+    html = (f"<div style='font-family:Arial,sans-serif'><h2 style='color:#123d2c'>New employee account</h2>"
+            f"{_html_table(rows)}<p>If you don't recognise this person, disable the account in "
+            f"<b>Admin → Employees</b>.</p></div>")
+    return send_email(hr_recipients(), subject, text, html, "ACCOUNT")
+
+
 def send_test_email(to_address):
     return send_email([to_address], f"[{APP_NAME}] Test email",
                       f"This is a test email from {APP_NAME}. Email notifications are working.",

@@ -22,6 +22,8 @@ SETTING_KEYS = (
     "ADMIN_PASSWORD",
     "DEFAULT_EMPLOYEE_PASSWORD",
     "SHOW_DEMO_LOGINS",
+    "ALLOW_SIGNUP",
+    "ALLOWED_EMAIL_DOMAINS",
     # Email (SMTP) - e.g. Gmail with an App Password
     "SMTP_HOST",
     "SMTP_PORT",
@@ -75,6 +77,11 @@ ADMIN_PASSWORD = _get("ADMIN_PASSWORD", "Admin@123")
 # Starting password for the employees in data/employees.csv (they can change it in My Profile).
 DEFAULT_EMPLOYEE_PASSWORD = _get("DEFAULT_EMPLOYEE_PASSWORD", "Welcome@123")
 SHOW_DEMO_LOGINS = _get("SHOW_DEMO_LOGINS", "1") != "0"
+# Employees can create their own account on the login page (1 = yes, 0 = only HR adds accounts)
+ALLOW_SIGNUP = _get("ALLOW_SIGNUP", "1") != "0"
+# Optional: only allow these email domains to sign up, e.g. "mycompany.com, gmail.com" (empty = any)
+ALLOWED_EMAIL_DOMAINS = [d.strip().lower().lstrip("@") for d in _get("ALLOWED_EMAIL_DOMAINS").split(",") if d.strip()]
+DEFAULT_ADMIN_EMAIL = "hr.admin@company.com"
 
 # ---- Email (SMTP) ----
 SMTP_HOST = _get("SMTP_HOST", "smtp.gmail.com")

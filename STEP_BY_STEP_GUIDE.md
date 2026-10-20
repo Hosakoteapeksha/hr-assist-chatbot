@@ -10,6 +10,19 @@
 
 ## 1. Logins
 
+**Real users**
+- **Employees create their own account.** On the login page, they open the **Create account** tab and enter their name, own email ID and a password. HR gets an email about every new account and can disable it in **Admin → Employees**.
+- **You as HR admin, with your own email:** in Secrets (or `.env`) set
+  ```toml
+  ADMIN_EMAIL = "your.email@gmail.com"
+  ADMIN_PASSWORD = "your-strong-password"
+  SHOW_DEMO_LOGINS = "0"
+  ```
+  The demo admin `hr.admin@company.com` is then switched off, and the demo accounts table is hidden.
+- **Optional:** `ALLOWED_EMAIL_DOMAINS = "mycompany.com"` lets only company emails sign up. Set `ALLOW_SIGNUP = "0"` if only HR should create accounts.
+
+**Demo accounts** (for testing):
+
 | Who | Email | Password |
 |---|---|---|
 | HR Admin | `hr.admin@company.com` | `Admin@123` |

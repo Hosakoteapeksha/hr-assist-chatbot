@@ -158,11 +158,20 @@ def seed_users():
             rows = list(csv.DictReader(f))
     except FileNotFoundError:
         pass
+    custom_admin = ADMIN_EMAIL != "hr.admin@company.com"
+    if custom_admin:
+        # Your own admin email is set: don't create the demo admin account.
+        rows = [r for r in rows if (r.get("role") or "").strip().lower() != "admin"
+                or (r.get("email") or "").strip().lower() == ADMIN_EMAIL]
     if not any(r.get("email", "").strip().lower() == ADMIN_EMAIL for r in rows):
         rows.insert(0, {"employee_code": "HR000", "full_name": "HR Admin", "email": ADMIN_EMAIL,
                         "department": "Human Resources", "designation": "HR Manager", "role": "admin"})
     db = SessionLocal()
     try:
+        if custom_admin:   # switch off the demo admin if it exists from earlier
+            demo = db.query(User).filter(User.email == "hr.admin@company.com").first()
+            if demo and demo.is_active:
+                demo.is_active = False
         existing = {e for (e,) in db.query(User.email).all()}
         for r in rows:
             email = (r.get("email") or "").strip().lower()
